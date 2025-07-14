@@ -14,32 +14,37 @@ const config = {
   puppeteer: {
     headless: process.env.HEADLESS !== 'false',
     slowMo: parseInt(process.env.SLOW_MO) || 100
+  },
+  imageClassifier: {
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024, // 10MB
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    topK: parseInt(process.env.TOP_K) || 5
   }
 };
 
 // 验证必要的配置
 if (!config.scraper.userAgent) {
-  console.error('错误: 请设置 USER_AGENT 环境变量');
+  console.error('Error: Please set USER_AGENT environment variable');
   process.exit(1);
 }
 
 if (!config.scraper.timeout) {
-  console.error('错误: 请设置 TIMEOUT 环境变量');
+  console.error('Error: Please set TIMEOUT environment variable');
   process.exit(1);
 }
 
 if (!config.scraper.delay) {
-  console.error('错误: 请设置 DELAY 环境变量');
+  console.error('Error: Please set DELAY environment variable');
   process.exit(1);
 }
 
 if (!config.scraper.maxRetries) {
-  console.error('错误: 请设置 MAX_RETRIES 环境变量');
+  console.error('Error: Please set MAX_RETRIES environment variable');
   process.exit(1);
 }
 
 if (!config.puppeteer.headless) {
-  console.error('错误: 请设置 HEADLESS 环境变量');
+  console.error('Error: Please set HEADLESS environment variable');
   process.exit(1);
 }
 

@@ -197,6 +197,7 @@
                 <div class="tab active" onclick="switchTab('single')">Single URL</div>
                 <div class="tab" onclick="switchTab('multiple')">Multiple URLs</div>
                 <div class="tab" onclick="switchTab('extract')">Data Extraction</div>
+                <div class="tab" onclick="switchTab('classify')">Image Classifier</div>
                 <div class="tab" onclick="switchTab('demo')">Demo</div>
             </div>
 
@@ -249,6 +250,28 @@
                 </div>
                 <button class="btn" onclick="extractData()">Extract Data</button>
                 <div id="extractResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Image Classifier Tab -->
+            <div id="classify" class="tab-content">
+                <h3>🖼️ Image Classifier</h3>
+                <p>Upload an image or provide an image URL for intelligent classification:</p>
+                
+                <div class="form-group">
+                    <label for="imageFile">Upload Image:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="previewImage(this)">
+                    <div id="imagePreview" style="margin-top: 10px; display: none;">
+                        <img id="previewImg" style="max-width: 300px; max-height: 200px; border-radius: 8px;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageUrl">Or Image URL:</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                </div>
+                
+                <button class="btn" onclick="classifyImage()">Classify Image</button>
+                <div id="classifyResult" class="result" style="display: none;"></div>
             </div>
 
             <!-- Demo Tab -->
@@ -483,6 +506,91 @@
         document.querySelector('.tab[onclick="switchTab(\'demo\')"]').addEventListener('click', function() {
             document.getElementById('multipleUrls').value = 'https://httpbin.org/html\nhttps://example.com\nhttps://jsonplaceholder.typicode.com/posts/1';
         });
+
+        // 圖片預覽功能
+        function previewImage(input) {
+            const file = input.files[0];
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        // 圖片分類功能
+        async function classifyImage() {
+            const imageFile = document.getElementById('imageFile').files[0];
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            
+            if (!imageFile && !imageUrl) {
+                showResult('classifyResult', 'error', '請上傳圖片或提供圖片URL');
+                return;
+            }
+
+            updateStatus('正在分類圖片...');
+            
+            try {
+                let response;
+                
+                if (imageFile) {
+                    // 上傳圖片分類
+                    const formData = new FormData();
+                    formData.append('image', imageFile);
+                    
+                    response = await fetch('/api/classify/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    // URL圖片分類
+                    response = await fetch('/api/classify/url', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ imageUrl })
+                    });
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    let resultHtml = `
+                        <strong>圖片分類成功!</strong><br>
+                        <strong>檔案:</strong> ${result.filename || result.url}<br>
+                        <strong>大小:</strong> ${(result.size / 1024).toFixed(2)} KB<br><br>
+                        <strong>分類結果:</strong><br>
+                    `;
+                    
+                    result.classifications.forEach((classification, index) => {
+                        resultHtml += `
+                            <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                <strong>${index + 1}. ${classification.description}</strong><br>
+                                <strong>類別:</strong> ${classification.class}<br>
+                                <strong>置信度:</strong> ${classification.percentage}%<br>
+                                <strong>概率:</strong> ${classification.probability.toFixed(4)}
+                            </div>
+                        `;
+                    });
+                    
+                    showResult('classifyResult', 'success', resultHtml);
+                } else {
+                    showResult('classifyResult', 'error', `分類失敗: ${result.error}`);
+                }
+            } catch (error) {
+                showResult('classifyResult', 'error', `網路錯誤: ${error.message}`);
+            }
+            
+            updateStatus('就緒');
+        }
 
         // Initialize
         checkServiceStatus();
