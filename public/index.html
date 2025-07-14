@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraper Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab:hover {
+            background-color: #f8f9ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+
+        .result.success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .result pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .demo-urls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .demo-url {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            word-break: break-all;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .demo-url:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕷️ Web Scraper Demo</h1>
+            <p>Test web scraping functionality with different methods</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('single')">Single URL</div>
+                <div class="tab" onclick="switchTab('multiple')">Multiple URLs</div>
+                <div class="tab" onclick="switchTab('extract')">Data Extraction</div>
+                <div class="tab" onclick="switchTab('demo')">Demo</div>
+            </div>
+
+            <!-- Single URL Tab -->
+            <div id="single" class="tab-content active">
+                <h3>Scrape Single URL</h3>
+                <div class="form-group">
+                    <label for="singleUrl">URL:</label>
+                    <input type="url" id="singleUrl" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="singleMethod">Method:</label>
+                    <select id="singleMethod">
+                        <option value="axios">Axios (Simple)</option>
+                        <option value="puppeteer">Puppeteer (Advanced)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="scrapeSingle()">Scrape URL</button>
+                <div id="singleResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Multiple URLs Tab -->
+            <div id="multiple" class="tab-content">
+                <h3>Scrape Multiple URLs</h3>
+                <div class="form-group">
+                    <label for="multipleUrls">URLs (one per line):</label>
+                    <textarea id="multipleUrls" rows="5" placeholder="https://example.com&#10;https://httpbin.org/html&#10;https://jsonplaceholder.typicode.com/posts/1"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="multipleMethod">Method:</label>
+                    <select id="multipleMethod">
+                        <option value="axios">Axios (Simple)</option>
+                        <option value="puppeteer">Puppeteer (Advanced)</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="scrapeMultiple()">Scrape URLs</button>
+                <div id="multipleResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Data Extraction Tab -->
+            <div id="extract" class="tab-content">
+                <h3>Extract Specific Data</h3>
+                <div class="form-group">
+                    <label for="extractUrl">URL:</label>
+                    <input type="url" id="extractUrl" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="selectors">CSS Selectors (JSON):</label>
+                    <textarea id="selectors" rows="5" placeholder='{&#10;  "title": "h1",&#10;  "description": "meta[name=description]",&#10;  "content": ".content"&#10;}'></textarea>
+                </div>
+                <button class="btn" onclick="extractData()">Extract Data</button>
+                <div id="extractResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Demo Tab -->
+            <div id="demo" class="tab-content">
+                <h3>Run Demo Scraping</h3>
+                <p>Test the scraper with predefined demo URLs:</p>
+                <div class="demo-urls">
+                    <div class="demo-url">https://httpbin.org/html</div>
+                    <div class="demo-url">https://example.com</div>
+                    <div class="demo-url">https://jsonplaceholder.typicode.com/posts/1</div>
+                </div>
+                <button class="btn" onclick="runDemo()">Run Demo</button>
+                <div id="demoResult" class="result" style="display: none;"></div>
+            </div>
+
+            <div class="status" id="status">Ready to scrape</div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        async function scrapeSingle() {
+            const url = document.getElementById('singleUrl').value;
+            const method = document.getElementById('singleMethod').value;
+            const resultDiv = document.getElementById('singleResult');
+            
+            if (!url) {
+                showResult('singleResult', 'error', 'Please enter a URL');
+                return;
+            }
+
+            updateStatus('Scraping...');
+            
+            try {
+                const response = await fetch(`/api/scrape/${method}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('singleResult', 'success', `
+                        <strong>Scraping successful!</strong><br>
+                        <strong>Title:</strong> ${result.title}<br>
+                        <strong>Content Preview:</strong> ${result.content}<br>
+                        <strong>Links found:</strong> ${result.links ? result.links.length : 0}<br>
+                        <strong>Images found:</strong> ${result.images ? result.images.length : 0}<br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult('singleResult', 'error', `Scraping failed: ${result.error}`);
+                }
+            } catch (error) {
+                showResult('singleResult', 'error', `Network error: ${error.message}`);
+            }
+            
+            updateStatus('Ready');
+        }
+
+        async function scrapeMultiple() {
+            const urlsText = document.getElementById('multipleUrls').value;
+            const method = document.getElementById('multipleMethod').value;
+            const resultDiv = document.getElementById('multipleResult');
+            
+            if (!urlsText) {
+                showResult('multipleResult', 'error', 'Please enter URLs');
+                return;
+            }
+
+            const urls = urlsText.split('\n').filter(url => url.trim());
+            
+            if (urls.length === 0) {
+                showResult('multipleResult', 'error', 'No valid URLs found');
+                return;
+            }
+
+            updateStatus('Scraping multiple URLs...');
+            
+            try {
+                const response = await fetch('/api/scrape/multiple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ urls, method })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('multipleResult', 'success', `
+                        <strong>Multiple scraping completed!</strong><br>
+                        <strong>Total URLs:</strong> ${result.totalUrls}<br>
+                        <strong>Successful:</strong> ${result.successful}<br>
+                        <strong>Failed:</strong> ${result.failed}<br>
+                        <pre>${JSON.stringify(result.results, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult('multipleResult', 'error', `Scraping failed: ${result.error}`);
+                }
+            } catch (error) {
+                showResult('multipleResult', 'error', `Network error: ${error.message}`);
+            }
+            
+            updateStatus('Ready');
+        }
+
+        async function extractData() {
+            const url = document.getElementById('extractUrl').value;
+            const selectorsText = document.getElementById('selectors').value;
+            
+            if (!url) {
+                showResult('extractResult', 'error', 'Please enter a URL');
+                return;
+            }
+
+            if (!selectorsText) {
+                showResult('extractResult', 'error', 'Please enter CSS selectors');
+                return;
+            }
+
+            let selectors;
+            try {
+                selectors = JSON.parse(selectorsText);
+            } catch (error) {
+                showResult('extractResult', 'error', 'Invalid JSON format for selectors');
+                return;
+            }
+
+            updateStatus('Extracting data...');
+            
+            try {
+                const response = await fetch('/api/scrape/extract', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, selectors })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('extractResult', 'success', `
+                        <strong>Data extraction successful!</strong><br>
+                        <pre>${JSON.stringify(result.data, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult('extractResult', 'error', `Extraction failed: ${result.error}`);
+                }
+            } catch (error) {
+                showResult('extractResult', 'error', `Network error: ${error.message}`);
+            }
+            
+            updateStatus('Ready');
+        }
+
+        async function runDemo() {
+            updateStatus('Running demo...');
+            
+            try {
+                const response = await fetch('/api/scrape/demo');
+                const result = await response.json();
+                
+                if (result.successful > 0) {
+                    showResult('demoResult', 'success', `
+                        <strong>Demo completed!</strong><br>
+                        <strong>Total URLs:</strong> ${result.totalUrls}<br>
+                        <strong>Successful:</strong> ${result.successful}<br>
+                        <strong>Failed:</strong> ${result.failed}<br>
+                        <strong>Timestamp:</strong> ${result.timestamp}<br>
+                        <pre>${JSON.stringify(result.results, null, 2)}</pre>
+                    `);
+                } else {
+                    showResult('demoResult', 'error', 'Demo failed - no successful scrapes');
+                }
+            } catch (error) {
+                showResult('demoResult', 'error', `Demo error: ${error.message}`);
+            }
+            
+            updateStatus('Ready');
+        }
+
+        function showResult(elementId, type, message) {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.innerHTML = message;
+            element.style.display = 'block';
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Check service status on load
+        async function checkServiceStatus() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                if (data.success) {
+                    updateStatus('Service is running');
+                } else {
+                    updateStatus('Service error');
+                }
+            } catch (error) {
+                updateStatus('Cannot connect to service');
+            }
+        }
+
+        // Load demo URLs when demo tab is clicked
+        document.querySelector('.tab[onclick="switchTab(\'demo\')"]').addEventListener('click', function() {
+            document.getElementById('multipleUrls').value = 'https://httpbin.org/html\nhttps://example.com\nhttps://jsonplaceholder.typicode.com/posts/1';
+        });
+
+        // Initialize
+        checkServiceStatus();
+    </script>
+</body>
+</html> 
